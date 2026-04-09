@@ -10,5 +10,8 @@
     "@jonji/application": "workspace:*",
     "@jonji/infrastructure": "workspace:*",
     "@jonji/types": "workspace:*"
+  },
+  "devDependencies": {
+    "wrangler": "latest"
   }
 }
