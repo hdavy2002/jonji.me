@@ -10,9 +10,7 @@
     "hono": "^4.0.0",
     "@jonji/application": "workspace:*",
     "@jonji/infrastructure": "workspace:*",
-    "@jonji/types": "workspace:*"
-  },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
+    "@jonji/types": "workspace:*",
+    "wrangler": "3.114.17"
   }
 }
