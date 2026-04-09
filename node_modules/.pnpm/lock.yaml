@@ -12,6 +12,18 @@ importers:
         specifier: latest
         version: 2.9.5
 
+  apps/api:
+    dependencies:
+      '@jonji/application':
+        specifier: workspace:*
+        version: link:../../packages/application
+      '@jonji/infrastructure':
+        specifier: workspace:*
+        version: link:../../packages/infrastructure
+      '@jonji/types':
+        specifier: workspace:*
+        version: link:../../packages/types
+
   packages/api-client: {}
 
   packages/application: {}
