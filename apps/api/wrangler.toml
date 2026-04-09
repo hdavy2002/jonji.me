@@ -1,0 +1,12 @@
+[[d1_databases]]
+binding = "DB"
+database_name = "jonji-users"
+database_id = "f66c433d-f649-4a4d-ae93-6b75b4817f6b"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "d33b3bfa51514e3b9cac2ca796cb60cb"
+
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "jonji-media"
