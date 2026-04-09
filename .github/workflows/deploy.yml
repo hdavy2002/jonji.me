@@ -10,43 +10,41 @@ jobs:
   deploy-api:
     name: Deploy API (Workers)
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
-      - run: pnpm install
-      - run: pnpm --filter @jonji/api build
+      - run: pnpm install --frozen-lockfile
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/api
+          workingDirectory: ./apps/api
           command: deploy
-          wranglerVersion: "latest"
+          wranglerVersion: "3"
 
   deploy-web:
     name: Deploy Web (Pages)
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     needs: deploy-api
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: pnpm
-      - run: pnpm install
-      - run: pnpm --filter @jonji/web build
+      - run: pnpm install --frozen-lockfile
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          workingDirectory: apps/web
+          workingDirectory: ./apps/web
           command: pages deploy .next --project-name=jonji-web

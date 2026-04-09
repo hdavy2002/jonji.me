@@ -1,5 +1,5 @@
-import { D1UserRepository, TursoSiteRepository, TinybirdSearchRepository, AnthropicAgentService } from '@jonji/infrastructure';
-import { RegisterUserUseCase, CreateSiteUseCase, SearchStoresUseCase } from '@jonji/application';
+import { D1UserRepository, TursoSiteRepository, TinybirdSearchRepository, AnthropicAgentService } from '../../../packages/infrastructure/src';
+import { RegisterUserUseCase, CreateSiteUseCase, SearchStoresUseCase } from '../../../packages/application/src';
 
 export function createContainer(env: any) {
   const userRepo = new D1UserRepository(env.DB);
