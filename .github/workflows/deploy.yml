@@ -25,6 +25,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           workingDirectory: apps/api
           command: deploy
+          packageManager: pnpm
 
   deploy-web:
     name: Deploy Web (Pages)
