@@ -5,3 +5,4 @@ export * from './search/TinybirdSearchRepository';
 export * from './cache/CFKVCacheService';
 export * from './agent/AnthropicAgentService';
 export * from './email/ResendEmailService';
+export * from './auth/OtpService';

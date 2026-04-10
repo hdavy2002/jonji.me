@@ -6,7 +6,12 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@jonji/infrastructure": ["../../../packages/infrastructure/dist"],
+      "@jonji/application": ["../../../packages/application/dist"],
+      "@jonji/domain": ["../../../packages/domain/dist"]
+    }
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]

@@ -1,9 +1,9 @@
 import { nanoid } from 'nanoid';
 import { Redis } from '@upstash/redis';
-import { argon2Verify } from 'hash-wasm';
 import { createClient } from '@libsql/client';
+import { User } from '@jonji/domain';
 import type { IUserRepository } from '@jonji/domain';
-import type { ITursoPlatformClient } from '@jonji/infrastructure';
+import { OtpService, TursoPlatformClient } from '@jonji/infrastructure';
 
 const TURSO_SCHEMA = `
 CREATE TABLE IF NOT EXISTS profile (
@@ -60,60 +60,62 @@ CREATE TABLE IF NOT EXISTS inbox_messages (
 `;
 
 export class RegisterUserUseCase {
+  private readonly otpService: OtpService;
+
   constructor(
     private readonly redis: Redis,
     private readonly userRepo: IUserRepository,
-    private readonly tursoPlatform: ITursoPlatformClient,
-  ) {}
+    private readonly tursoPlatform: TursoPlatformClient,
+    luciaSecret: string,
+  ) {
+    this.otpService = new OtpService(luciaSecret);
+  }
 
-  async execute(email: string, username: string, code: string) {
+  async execute(
+    email: string,
+    username: string,
+    code: string,
+  ): Promise<{ sessionId: string; userId: string; username: string }> {
     const emailKey = email.toLowerCase().trim();
     const usernameKey = username.toLowerCase().trim();
 
     // Verify OTP
-    const stored = await this.redis.get<string>(`otp:${emailKey}`);
-    if (!stored) throw new Error('Code expired. Request a new one.');
-    let valid = false;
-    try {
-      valid = await argon2Verify({ password: code, hash: stored });
-    } catch {
-      valid = false;
-    }
+    const storedHash = await this.redis.get<string>(`otp:${emailKey}`);
+    if (!storedHash) throw new Error('Code expired. Request a new one.');
+    const valid = await this.otpService.verifyCode(code, storedHash);
     if (!valid) throw new Error('Invalid code.');
     await this.redis.del(`otp:${emailKey}`);
 
     // Check username
-    const taken = !!(await this.userRepo.findByUsername(usernameKey));
-    if (taken) throw new Error('Username already taken.');
-
-    // Create user
-    const userId = 'usr_' + nanoid(16);
+    const existing = await this.userRepo.findByUsername(usernameKey);
+    if (existing) throw new Error('Username already taken.');
 
     // Provision Turso DB
+    const userId = 'usr_' + nanoid(16);
     const { dbUrl, authToken } = await this.tursoPlatform.createUserDatabase(userId);
 
-    // Run schema on user's DB
+    // Run schema on new DB
     const userDb = createClient({ url: dbUrl, authToken });
     const statements = TURSO_SCHEMA.split(';').map((s) => s.trim()).filter(Boolean);
     for (const sql of statements) {
       await userDb.execute(sql);
     }
 
-    // Insert profile
+    // Create profile row
     await userDb.execute({
-      sql: 'INSERT INTO profile (id, username, display_name, created_at) VALUES (?, ?, ?, ?)',
+      sql: 'INSERT INTO profile (id, username, display_name, created_at) VALUES (?,?,?,?)',
       args: [userId, usernameKey, usernameKey, Date.now()],
     });
 
     // Save user to D1
-    const user = {
+    const user: User = {
       id: userId,
       email: emailKey,
       username: usernameKey,
       tursoDbUrl: dbUrl,
       tursoAuthToken: authToken,
-      plan: 'free' as const,
-      verifiedTier: 'none' as const,
+      plan: 'free',
+      verifiedTier: 'none',
       createdAt: Date.now(),
     };
     await this.userRepo.save(user);
@@ -121,10 +123,10 @@ export class RegisterUserUseCase {
     // Create session
     const sessionId = 'sess_' + crypto.randomUUID().replace(/-/g, '');
     await userDb.execute({
-      sql: 'INSERT INTO sessions (id, expires_at) VALUES (?, ?)',
+      sql: 'INSERT INTO sessions (id, expires_at) VALUES (?,?)',
       args: [sessionId, Date.now() + 1000 * 60 * 60 * 24 * 30],
     });
 
-    return { ok: true, sessionId, userId, username: usernameKey };
+    return { sessionId, userId, username: usernameKey };
   }
 }

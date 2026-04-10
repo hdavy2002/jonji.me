@@ -1,13 +1,18 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import { argon2id } from 'hash-wasm';
+import { OtpService } from '@jonji/infrastructure';
 import type { IEmailService } from '@jonji/domain';
 
 export class SendOTPUseCase {
+  private readonly otpService: OtpService;
+
   constructor(
     private readonly redis: Redis,
     private readonly emailService: IEmailService,
-  ) {}
+    luciaSecret: string,
+  ) {
+    this.otpService = new OtpService(luciaSecret);
+  }
 
   async execute(email: string): Promise<void> {
     const key = email.toLowerCase().trim();
@@ -22,19 +27,10 @@ export class SendOTPUseCase {
       throw new Error('Too many requests. Please wait 10 minutes.');
     }
 
-    const code = String(Math.floor(100000 + Math.random() * 900000));
-    const salt = crypto.getRandomValues(new Uint8Array(16));
-    const encoded = await argon2id({
-      password: code,
-      salt,
-      iterations: 3,
-      parallelism: 4,
-      memorySize: 4096, // 4 MB
-      hashLength: 32,
-      outputType: 'encoded',
-    });
+    const code = this.otpService.generateCode();
+    const hash = await this.otpService.hashCode(code);
 
-    await this.redis.set(`otp:${key}`, encoded, { ex: 600 });
+    await this.redis.set(`otp:${key}`, hash, { ex: 600 });
     await this.emailService.sendOTP(key, code);
   }
 }

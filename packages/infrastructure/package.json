@@ -15,8 +15,7 @@
   "dependencies": {
     "@jonji/domain": "workspace:*",
     "@jonji/types": "workspace:*",
-    "@libsql/client": "^0.14.0",
-    "oslo": "^1.2.1"
+    "@libsql/client": "^0.14.0"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

@@ -6,14 +6,14 @@ import {
   AnthropicAgentService,
   ResendEmailService,
   TursoPlatformClient,
-} from '../../../packages/infrastructure/src';
+} from '@jonji/infrastructure';
 import {
   RegisterUserUseCase,
   CreateSiteUseCase,
   SearchStoresUseCase,
   SendOTPUseCase,
   VerifyOTPUseCase,
-} from '../../../packages/application/src';
+} from '@jonji/application';
 
 export interface Container {
   sendOTP: SendOTPUseCase;
@@ -45,9 +45,9 @@ export function createContainer(env: any): Container {
     : null;
 
   return {
-    sendOTP: new SendOTPUseCase(redis, emailService),
-    verifyOTP: new VerifyOTPUseCase(redis, userRepo),
-    registerUser: new RegisterUserUseCase(redis, userRepo, tursoPlatform),
+    sendOTP: new SendOTPUseCase(redis, emailService, env.LUCIA_SECRET),
+    verifyOTP: new VerifyOTPUseCase(redis, userRepo, env.LUCIA_SECRET),
+    registerUser: new RegisterUserUseCase(redis, userRepo, tursoPlatform, env.LUCIA_SECRET),
     createSite: siteRepo && agentService ? new CreateSiteUseCase(siteRepo, agentService) : null as any,
     searchStores: new SearchStoresUseCase(searchRepo),
   };
