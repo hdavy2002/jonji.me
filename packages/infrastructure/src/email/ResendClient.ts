@@ -1,3 +1,2 @@
-import { Resend } from "resend";
-
-export const resend = new Resend(process.env.RESEND_API_KEY!);
+// Deprecated: emails are sent via direct fetch in ResendEmailService
+export const resend = null as unknown;

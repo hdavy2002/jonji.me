@@ -13,15 +13,16 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "composite": true,
     "paths": {
       "@jonji/domain": ["../domain/src"],
+      "@jonji/infrastructure": ["../infrastructure/src"],
       "@jonji/types": ["../types/src"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"],
   "references": [
-    { "path": "../domain" }
+    { "path": "../domain" },
+    { "path": "../infrastructure" }
   ]
 }
