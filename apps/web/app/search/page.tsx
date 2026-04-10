@@ -1,35 +1,53 @@
 'use client'
-
+import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Suspense } from 'react'
 import { SearchBox } from '@/components/search/SearchBox'
+import { ResultCard } from '@/components/search/ResultCard'
 
 function SearchResults() {
   const searchParams = useSearchParams()
-  const query = searchParams.get('q') ?? ''
+  const q = searchParams.get('q') || ''
+  const [results, setResults] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [searched, setSearched] = useState(false)
+
+  useEffect(() => {
+    if (!q) return
+    setLoading(true)
+    setSearched(true)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(q)}`)
+      .then(r => r.json())
+      .then(d => setResults(d.results || []))
+      .catch(() => setResults([]))
+      .finally(() => setLoading(false))
+  }, [q])
 
   return (
-    <main className="min-h-screen px-4 py-8">
-      <div className="w-full max-w-2xl mx-auto space-y-6">
-        <a href="/" className="text-2xl font-bold tracking-tight">
-          Jonji
-        </a>
-        <SearchBox initialValue={query} />
-        {query ? (
-          <p className="text-gray-500">
-            Searching for: <strong>{query}</strong> — results coming soon.
+    <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="mb-6">
+        <SearchBox initialValue={q} />
+      </div>
+      {loading && <p className="text-center text-gray-400 py-12">Searching...</p>}
+      {!loading && searched && (
+        <p className="text-sm text-gray-400 mb-4">
+          {results.length} result{results.length !== 1 ? 's' : ''} for "{q}"
+        </p>
+      )}
+      <div className="space-y-4">
+        {results.map(r => <ResultCard key={r.siteId} result={r} />)}
+        {!loading && searched && results.length === 0 && (
+          <p className="text-center text-gray-400 py-12">
+            No results found. Try different keywords.
           </p>
-        ) : (
-          <p className="text-gray-400">Enter a search query above.</p>
         )}
       </div>
-    </main>
+    </div>
   )
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<p className="text-center py-12 text-gray-400">Loading...</p>}>
       <SearchResults />
     </Suspense>
   )
