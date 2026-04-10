@@ -24,17 +24,43 @@ export class CFKVCacheService {
   }
 
   /**
-   * Simple sliding-window rate limit using KV.
-   * Stores a counter with TTL. Allows `limit` requests per `windowSeconds`.
+   * Token-bucket style rate limit using KV.
+   * Stores { count, windowStart }. Resets when windowSeconds have elapsed.
+   * Allows `limit` requests per `windowSeconds` window.
    */
   async rateLimit(key: string, limit: number, windowSeconds: number): Promise<{ success: boolean }> {
     const rateKey = `rl:${key}`;
-    const current = await this.get(rateKey);
-    const count = current ? parseInt(current, 10) : 0;
-    if (count >= limit) {
+    const raw = await this.get(rateKey);
+    const now = Date.now();
+
+    if (!raw) {
+      // Fresh window
+      await this.set(rateKey, JSON.stringify({ count: 1, start: now }), windowSeconds);
+      return { success: true };
+    }
+
+    let data: { count: number; start: number };
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      // Corrupted — start fresh
+      await this.set(rateKey, JSON.stringify({ count: 1, start: now }), windowSeconds);
+      return { success: true };
+    }
+
+    const elapsed = (now - data.start) / 1000;
+    if (elapsed >= windowSeconds) {
+      // New window
+      await this.set(rateKey, JSON.stringify({ count: 1, start: now }), windowSeconds);
+      return { success: true };
+    }
+
+    if (data.count >= limit) {
       return { success: false };
     }
-    await this.set(rateKey, String(count + 1), windowSeconds);
+
+    // Within window — increment counter, reset TTL
+    await this.set(rateKey, JSON.stringify({ count: data.count + 1, start: data.start }), windowSeconds);
     return { success: true };
   }
 }
