@@ -1,4 +1,3 @@
-import { Redis } from '@upstash/redis';
 import {
   D1UserRepository,
   TursoSiteRepository,
@@ -25,12 +24,6 @@ export interface Container {
 
 export function createContainer(env: any): Container {
   const userRepo = new D1UserRepository(env.DB);
-
-  const redis = new Redis({
-    url: env.UPSTASH_REDIS_REST_URL,
-    token: env.UPSTASH_REDIS_REST_TOKEN,
-  });
-
   const emailService = new ResendEmailService(env.RESEND_API_KEY, env.RESEND_FROM_EMAIL);
   const tursoPlatform = new TursoPlatformClient(env.TURSO_ORG_SLUG, env.TURSO_PLATFORM_API_TOKEN);
 
@@ -45,9 +38,9 @@ export function createContainer(env: any): Container {
     : null;
 
   return {
-    sendOTP: new SendOTPUseCase(redis, emailService, env.LUCIA_SECRET),
-    verifyOTP: new VerifyOTPUseCase(redis, userRepo, env.LUCIA_SECRET),
-    registerUser: new RegisterUserUseCase(redis, userRepo, tursoPlatform, env.LUCIA_SECRET),
+    sendOTP: new SendOTPUseCase(env.KV, emailService, env.LUCIA_SECRET),
+    verifyOTP: new VerifyOTPUseCase(env.KV, userRepo, env.LUCIA_SECRET),
+    registerUser: new RegisterUserUseCase(env.KV, userRepo, tursoPlatform, env.LUCIA_SECRET),
     createSite: siteRepo && agentService ? new CreateSiteUseCase(siteRepo, agentService) : null as any,
     searchStores: new SearchStoresUseCase(searchRepo),
   };

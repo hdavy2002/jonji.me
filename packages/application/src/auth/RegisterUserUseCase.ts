@@ -1,9 +1,8 @@
 import { nanoid } from 'nanoid';
-import { Redis } from '@upstash/redis';
 import { createClient } from '@libsql/client';
 import { User } from '@jonji/domain';
 import type { IUserRepository } from '@jonji/domain';
-import { OtpService, TursoPlatformClient } from '@jonji/infrastructure';
+import { OtpService, CFKVCacheService, TursoPlatformClient } from '@jonji/infrastructure';
 
 const TURSO_SCHEMA = `
 CREATE TABLE IF NOT EXISTS profile (
@@ -61,14 +60,16 @@ CREATE TABLE IF NOT EXISTS inbox_messages (
 
 export class RegisterUserUseCase {
   private readonly otpService: OtpService;
+  private readonly cache: CFKVCacheService;
 
   constructor(
-    private readonly redis: Redis,
+    private readonly kv: import('@jonji/infrastructure').IKV,
     private readonly userRepo: IUserRepository,
     private readonly tursoPlatform: TursoPlatformClient,
     luciaSecret: string,
   ) {
     this.otpService = new OtpService(luciaSecret);
+    this.cache = new CFKVCacheService(kv);
   }
 
   async execute(
@@ -80,11 +81,11 @@ export class RegisterUserUseCase {
     const usernameKey = username.toLowerCase().trim();
 
     // Verify OTP
-    const storedHash = await this.redis.get<string>(`otp:${emailKey}`);
+    const storedHash = await this.cache.get(`otp:${emailKey}`);
     if (!storedHash) throw new Error('Code expired. Request a new one.');
     const valid = await this.otpService.verifyCode(code, storedHash);
     if (!valid) throw new Error('Invalid code.');
-    await this.redis.del(`otp:${emailKey}`);
+    await this.cache.delete(`otp:${emailKey}`);
 
     // Check username
     const existing = await this.userRepo.findByUsername(usernameKey);

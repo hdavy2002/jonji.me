@@ -1,6 +1,5 @@
-import { Redis } from '@upstash/redis';
 import { createClient } from '@libsql/client';
-import { OtpService } from '@jonji/infrastructure';
+import { OtpService, CFKVCacheService } from '@jonji/infrastructure';
 import type { IUserRepository } from '@jonji/domain';
 
 export type VerifyOTPResult =
@@ -9,19 +8,21 @@ export type VerifyOTPResult =
 
 export class VerifyOTPUseCase {
   private readonly otpService: OtpService;
+  private readonly cache: CFKVCacheService;
 
   constructor(
-    private readonly redis: Redis,
+    private readonly kv: import('@jonji/infrastructure').IKV,
     private readonly userRepo: IUserRepository,
     luciaSecret: string,
   ) {
     this.otpService = new OtpService(luciaSecret);
+    this.cache = new CFKVCacheService(kv);
   }
 
   async execute(email: string, code: string): Promise<VerifyOTPResult> {
     const key = email.toLowerCase().trim();
 
-    const storedHash = await this.redis.get<string>(`otp:${key}`);
+    const storedHash = await this.cache.get(`otp:${key}`);
     if (!storedHash) {
       throw new Error('Code has expired or was not found. Request a new one.');
     }
@@ -31,7 +32,7 @@ export class VerifyOTPUseCase {
       throw new Error('Invalid code. Please try again.');
     }
 
-    await this.redis.del(`otp:${key}`);
+    await this.cache.delete(`otp:${key}`);
 
     const user = await this.userRepo.findByEmail(key);
     if (!user) {
