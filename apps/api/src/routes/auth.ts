@@ -1,29 +1,17 @@
 import { Hono } from 'hono';
+import { ResendEmailService } from '@jonji/infrastructure';
 import type { Container } from '../container';
 
 const auth = new Hono<{ Bindings: any; Variables: { container: Container } }>();
 
-// Debug endpoint — remove after diagnosing
+// Debug — uses same ResendEmailService directly
 auth.post('/debug/resend-test', async (c) => {
-  const container = c.get('container');
   try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${c.env.RESEND_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: c.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
-        to: 'hdavy2002@gmail.com',
-        subject: 'debug',
-        text: 'test',
-      }),
-    });
-    const text = await res.text();
-    return c.json({ status: res.status, body: text.slice(0, 200) });
+    const svc = new ResendEmailService(c.env.RESEND_API_KEY, c.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev');
+    await svc.sendOTP('hdavy2002@gmail.com', '999999');
+    return c.json({ ok: true });
   } catch (e: any) {
-    return c.json({ fetchError: e.message }, 500);
+    return c.json({ error: e.message, stack: e.stack?.slice(0, 400) }, 500);
   }
 });
 
