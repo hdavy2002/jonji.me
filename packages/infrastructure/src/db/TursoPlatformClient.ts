@@ -34,7 +34,11 @@ export class TursoPlatformClient implements ITursoPlatformClient {
       throw new Error(`Failed to create Turso database: ${response.status} ${err}`);
     }
 
-    const data = (await response.json()) as TursoDatabase;
-    return { dbUrl: data.hostname, authToken: data.authToken };
+    // Turso Platform API v1 response:
+    // { database: "name", username: "...", password: "..." }
+    // Connection URL: <database>.<org>.turso.io
+    const data = (await response.json()) as { database: string; username: string; password: string };
+    const dbUrl = `https://${data.database}.${this.orgSlug}.turso.io`;
+    return { dbUrl, authToken: data.password };
   }
 }
