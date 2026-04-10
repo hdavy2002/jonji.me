@@ -1,12 +1,12 @@
+'use client'
+
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import { SearchBox } from '@/components/search/SearchBox'
 
-interface SearchPageProps {
-  searchParams: Promise<{ q?: string }>
-}
-
-export default async function SearchPage({ searchParams }: SearchPageProps) {
-  const { q } = await searchParams
-  const query = q ?? ''
+function SearchResults() {
+  const searchParams = useSearchParams()
+  const query = searchParams.get('q') ?? ''
 
   return (
     <main className="min-h-screen px-4 py-8">
@@ -24,5 +24,13 @@ export default async function SearchPage({ searchParams }: SearchPageProps) {
         )}
       </div>
     </main>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+      <SearchResults />
+    </Suspense>
   )
 }
