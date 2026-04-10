@@ -92,7 +92,7 @@ export class RegisterUserUseCase {
     if (existing) throw new Error('Username already taken.');
 
     // Provision Turso DB — name must be Turso-compatible (lowercase, dashes only)
-    const userId = 'usr_' + nanoid(16);
+    const userId = 'usr_' + nanoid(16, { lowercase: true });
     const tursoDbName = userId.replace(/_/g, '-');
     const { dbUrl, authToken } = await this.tursoPlatform.createUserDatabase(tursoDbName);
 
