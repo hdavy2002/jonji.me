@@ -8,3 +8,5 @@ export * from './intent/IIntentRepository';
 export * from './inbox/Thread';
 export * from './inbox/IInboxRepository';
 export * from './email/IEmailService';
+export * from './agent/IAgentService';
+export * from './search/ISearchRepository';

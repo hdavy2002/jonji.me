@@ -78,7 +78,7 @@ export class RegisterUserUseCase {
     await this.redis.del(`otp:${emailKey}`);
 
     // Check username
-    const taken = await this.userRepo.isUsernameTaken(usernameKey);
+    const taken = !!(await this.userRepo.findByUsername(usernameKey));
     if (taken) throw new Error('Username already taken.');
 
     // Create user

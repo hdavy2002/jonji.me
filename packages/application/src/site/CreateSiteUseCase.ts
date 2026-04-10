@@ -6,8 +6,8 @@ export class CreateSiteUseCase {
       private agentService: IAgentService
   ) {}
 
-  async execute(userId: string, description: string): Promise<Site> {
-    const a2uiJson = await this.agentService.generateA2UI(description);
+  async execute(_userId: string, description: string): Promise<Site> {
+    const a2uiJson = await this.agentService.complete(description);
     const site: Site = { 
         id: crypto.randomUUID(), 
         slug: 'new-site', 

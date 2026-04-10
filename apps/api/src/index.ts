@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
+import type { Container } from './container';
 import { createContainer } from './container';
 import sites from './routes/sites';
 import auth from './routes/auth';
 import inbox from './routes/inbox';
 import wallet from './routes/wallet';
 
-const app = new Hono<{ Bindings: any }>();
+const app = new Hono<{ Bindings: any; Variables: { container: Container } }>();
 
 app.use('*', async (c, next) => {
   c.set('container', createContainer(c.env));
