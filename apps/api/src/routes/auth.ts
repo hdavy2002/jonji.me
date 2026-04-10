@@ -10,11 +10,11 @@ auth.post('/debug/resend-test', async (c) => {
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${container.emailService['apiKey']}`,
+        'Authorization': `Bearer ${c.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: container.emailService['from'],
+        from: c.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev',
         to: 'hdavy2002@gmail.com',
         subject: 'debug',
         text: 'test',
