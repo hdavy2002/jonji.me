@@ -1,29 +1,34 @@
-import { Argon2id } from "oslo/password";
-import { redis } from "../../infrastructure/src/cache/RedisClient";
-import { IUserRepository } from "../../../domain/src/user/IUserRepository";
+import bcrypt from 'bcryptjs';
+import { Redis } from '@upstash/redis';
+import type { IUserRepository } from '@jonji/domain';
+
+export type VerifyOTPResult =
+  | { needsRegistration: true; email: string }
+  | { needsRegistration: false; sessionId: string; userId: string; username: string };
 
 export class VerifyOTPUseCase {
-  constructor(private userRepo: IUserRepository) {}
+  constructor(
+    private readonly redis: Redis,
+    private readonly userRepo: IUserRepository,
+  ) {}
 
-  async execute(email: string, code: string) {
-    const hashedCode = await redis.get(`otp:${email}`);
-    if (!hashedCode) {
-      throw new Error("Code expired or not found");
-    }
+  async execute(email: string, code: string): Promise<VerifyOTPResult> {
+    const key = email.toLowerCase().trim();
+    const hash = await this.redis.get<string>(`otp:${key}`);
+    if (!hash) throw new Error('Code expired or not found. Request a new one.');
 
-    const valid = await new Argon2id().verify(hashedCode as string, code);
-    if (!valid) {
-      throw new Error("Invalid code");
-    }
+    const valid = await bcrypt.compare(code, hash);
+    if (!valid) throw new Error('Invalid code.');
+    await this.redis.del(`otp:${key}`);
 
-    await redis.del(`otp:${email}`);
+    const user = await this.userRepo.findByEmail(key);
+    if (!user) return { needsRegistration: true, email: key };
 
-    const user = await this.userRepo.findByEmail(email);
-    if (!user) {
-      return { needsRegistration: true, email };
-    }
-
-    // This part assumes Lucia integration which I will implement next
-    return { needsRegistration: false, user };
+    return {
+      needsRegistration: false,
+      sessionId: 'sess_' + crypto.randomUUID().replace(/-/g, ''),
+      userId: user.id,
+      username: user.username,
+    };
   }
 }

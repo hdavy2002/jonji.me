@@ -1,14 +1,45 @@
-import { D1UserRepository, TursoSiteRepository, TinybirdSearchRepository, AnthropicAgentService } from '../../../packages/infrastructure/src';
-import { RegisterUserUseCase, CreateSiteUseCase, SearchStoresUseCase } from '../../../packages/application/src';
+import { Redis } from '@upstash/redis';
+import {
+  D1UserRepository,
+  TursoSiteRepository,
+  TinybirdSearchRepository,
+  AnthropicAgentService,
+  ResendEmailService,
+  TursoPlatformClient,
+} from '../../../packages/infrastructure/src';
+import {
+  RegisterUserUseCase,
+  CreateSiteUseCase,
+  SearchStoresUseCase,
+  SendOTPUseCase,
+  VerifyOTPUseCase,
+} from '../../../packages/application/src';
 
-export function createContainer(env: any) {
+export interface Container {
+  sendOTP: SendOTPUseCase;
+  verifyOTP: VerifyOTPUseCase;
+  registerUser: RegisterUserUseCase;
+  createSite: CreateSiteUseCase;
+  searchStores: SearchStoresUseCase;
+}
+
+export function createContainer(env: any): Container {
   const userRepo = new D1UserRepository(env.DB);
+  const redis = new Redis({
+    url: env.UPSTASH_REDIS_REST_URL,
+    token: env.UPSTASH_REDIS_REST_TOKEN,
+  });
+  const emailService = new ResendEmailService(env.RESEND_API_KEY, env.RESEND_FROM_EMAIL);
+  const tursoPlatform = new TursoPlatformClient(env.TURSO_ORG_SLUG, env.TURSO_PLATFORM_API_TOKEN);
+
   const siteRepo = new TursoSiteRepository(env.TURSO_URL, env.TURSO_TOKEN);
-  const searchRepo = new TinybirdSearchRepository(env.TINYBIRD_TOKEN, env.TINYBIRD_ENDPOINT);
+  const searchRepo = new TinybirdSearchRepository(env.TINYBIRD_API_KEY, env.TINYBIRD_BASE_URL);
   const agentService = new AnthropicAgentService(env.ANTHROPIC_API_KEY);
 
   return {
-    registerUser: new RegisterUserUseCase(userRepo, null),
+    sendOTP: new SendOTPUseCase(redis, emailService),
+    verifyOTP: new VerifyOTPUseCase(redis, userRepo),
+    registerUser: new RegisterUserUseCase(redis, userRepo, tursoPlatform),
     createSite: new CreateSiteUseCase(siteRepo, agentService),
     searchStores: new SearchStoresUseCase(searchRepo),
   };

@@ -1,32 +1,28 @@
-import { Argon2id } from "oslo/password";
-import { redis } from "../../infrastructure/src/cache/RedisClient"; // Assuming an exported redis instance
-import { resend } from "../../infrastructure/src/email/ResendClient"; // Assuming an exported resend instance
-import { Ratelimit } from "@upstash/ratelimit";
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
+import bcrypt from 'bcryptjs';
+import type { IEmailService } from '@jonji/domain';
 
 export class SendOTPUseCase {
-  private ratelimit = new Ratelimit({
-    redis: redis,
-    limiter: Ratelimit.slidingWindow(3, "10 m"),
-  });
+  constructor(
+    private readonly redis: Redis,
+    private readonly emailService: IEmailService,
+  ) {}
 
-  async execute(email: string) {
-    const { success } = await this.ratelimit.limit(`otp:${email}`);
-    if (!success) {
-      throw new Error("Too many requests");
-    }
+  async execute(email: string): Promise<void> {
+    const key = email.toLowerCase().trim();
+
+    const ratelimit = new Ratelimit({
+      redis: this.redis,
+      limiter: Ratelimit.slidingWindow(3, '10 m'),
+      prefix: 'ratelimit:otp',
+    });
+    const { success } = await ratelimit.limit(key);
+    if (!success) throw new Error('Too many requests. Wait 10 minutes.');
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const hashedCode = await new Argon2id().hash(code);
-
-    await redis.set(`otp:${email}`, hashedCode, { ex: 600 });
-    
-    await resend.emails.send({
-      from: "onboarding@resend.dev",
-      to: email,
-      subject: `Your Jonji code: ${code}`,
-      text: `Your verification code is: ${code}\n\nExpires in 10 minutes.`
-    });
-
-    return { ok: true };
+    const hash = await bcrypt.hash(code, 10);
+    await this.redis.set(`otp:${key}`, hash, { ex: 600 });
+    await this.emailService.sendOTP(key, code);
   }
 }

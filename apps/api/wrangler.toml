@@ -14,3 +14,7 @@ id = "d33b3bfa51514e3b9cac2ca796cb60cb"
 [[r2_buckets]]
 binding = "R2"
 bucket_name = "jonji-media"
+
+[vars]
+TINYBIRD_BASE_URL = "https://api.eu-central-1.aws.tinybird.co"
+APP_URL = "https://jonji.me"

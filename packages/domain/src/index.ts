@@ -7,3 +7,4 @@ export * from './intent/Intent';
 export * from './intent/IIntentRepository';
 export * from './inbox/Thread';
 export * from './inbox/IInboxRepository';
+export * from './email/IEmailService';

@@ -2,9 +2,10 @@
   "name": "@jonji/infrastructure",
   "version": "0.1.0",
   "dependencies": {
-    "oslo": "^1.2.1",
-    "@libsql/client": "^0.14.0",
     "@jonji/domain": "workspace:*",
-    "@jonji/types": "workspace:*"
+    "@jonji/types": "workspace:*",
+    "@libsql/client": "^0.14.0",
+    "oslo": "^1.2.1",
+    "resend": "^6.10.0"
   }
 }
