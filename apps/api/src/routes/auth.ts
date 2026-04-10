@@ -76,12 +76,12 @@ auth.post('/otp/verify', async (c) => {
 
 auth.post('/register', async (c) => {
   const container = c.get('container');
-  const { email, username, code } = await c.req.json();
-  if (!email || !username || !code) {
-    return c.json({ error: 'email, username, and code are required' }, 400);
+  const { email, username } = await c.req.json();
+  if (!email || !username) {
+    return c.json({ error: 'email and username are required' }, 400);
   }
   try {
-    const result = await container.registerUser.execute(email, username, code);
+    const result = await container.registerUser.execute(email, username);
     return c.json(result);
   } catch (err: any) {
     if (err.message.includes('already taken')) {

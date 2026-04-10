@@ -48,7 +48,7 @@ export function createContainer(env: any): Container {
   return {
     sendOTP: new SendOTPUseCase(env.KV, emailService, env.LUCIA_SECRET),
     verifyOTP: new VerifyOTPUseCase(env.KV, userRepo, env.LUCIA_SECRET),
-    registerUser: new RegisterUserUseCase(env.KV, userRepo, tursoPlatform, env.LUCIA_SECRET),
+    registerUser: new RegisterUserUseCase(env.KV, userRepo, tursoPlatform),
     createSite: siteRepo && agentService ? new CreateSiteUseCase(siteRepo, agentService) : null as any,
     searchStores: new SearchStoresUseCase(searchRepo),
   };

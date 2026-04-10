@@ -34,6 +34,9 @@ export class VerifyOTPUseCase {
 
     await this.cache.delete(`otp:${key}`);
 
+    // Mark email as verified (short TTL — register must follow within minutes)
+    await this.cache.set(`verified:${key}`, '1', 300);
+
     const user = await this.userRepo.findByEmail(key);
     if (!user) {
       return { needsRegistration: true, email: key };
