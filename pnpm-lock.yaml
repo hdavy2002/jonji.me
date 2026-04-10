@@ -54,9 +54,9 @@ importers:
       '@upstash/redis':
         specifier: ^1.34.0
         version: 1.37.0
-      argon2-browser:
-        specifier: ^1.18.0
-        version: 1.18.0
+      hash-wasm:
+        specifier: ^4.12.0
+        version: 4.12.0
       nanoid:
         specifier: ^5.0.0
         version: 5.1.7
@@ -707,9 +707,6 @@ packages:
     engines: {node: '>=0.4.0'}
     hasBin: true
 
-  argon2-browser@1.18.0:
-    resolution: {integrity: sha512-ImVAGIItnFnvET1exhsQB7apRztcoC5TnlSqernMJDUjbc/DLq3UEYeXFrLPrlaIl8cVfwnXb6wX2KpFf2zxHw==}
-
   as-table@1.0.55:
     resolution: {integrity: sha512-xvsWESUJn0JN421Xb9MQw6AsMHRCUknCe0Wjlxvjud80mU4E6hQf1A6NzQKcYNmYw62MfzEtXc+badstZP3JpQ==}
 
@@ -792,6 +789,9 @@ packages:
 
   glob-to-regexp@0.4.1:
     resolution: {integrity: sha512-lkX1HJXwyMcprw/5YUZc2s7DrpAiHB21/V+E1rHUrVNokkvB6bqMzT0VfV6/86ZNabt1k14YOIaT7nDvOX3Iiw==}
+
+  hash-wasm@4.12.0:
+    resolution: {integrity: sha512-+/2B2rYLb48I/evdOIhP+K/DD2ca2fgBjp6O+GBEnCDk2e4rpeXIK8GvIyRPjTezgmWn9gmKwkQjjx6BtqDHVQ==}
 
   hono@4.12.12:
     resolution: {integrity: sha512-p1JfQMKaceuCbpJKAPKVqyqviZdS0eUxH9v82oWo1kb9xjQ5wA6iP3FNVAPDFlz5/p7d45lO+BpSk1tuSZMF4Q==}
@@ -1409,8 +1409,6 @@ snapshots:
 
   acorn@8.14.0: {}
 
-  argon2-browser@1.18.0: {}
-
   as-table@1.0.55:
     dependencies:
       printable-characters: 1.0.42
@@ -1504,6 +1502,8 @@ snapshots:
       source-map: 0.6.1
 
   glob-to-regexp@0.4.1: {}
+
+  hash-wasm@4.12.0: {}
 
   hono@4.12.12: {}
 

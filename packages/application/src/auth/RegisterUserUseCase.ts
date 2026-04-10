@@ -1,7 +1,6 @@
 import { nanoid } from 'nanoid';
 import { Redis } from '@upstash/redis';
-// @ts-ignore — argon2-browser has no TS types
-import argon2 from 'argon2-browser';
+import { argon2Verify } from 'hash-wasm';
 import { createClient } from '@libsql/client';
 import type { IUserRepository } from '@jonji/domain';
 import type { ITursoPlatformClient } from '@jonji/infrastructure';
@@ -76,8 +75,7 @@ export class RegisterUserUseCase {
     if (!stored) throw new Error('Code expired. Request a new one.');
     let valid = false;
     try {
-      await argon2.verify({ pass: code, encoded: stored });
-      valid = true;
+      valid = await argon2Verify({ password: code, hash: stored });
     } catch {
       valid = false;
     }

@@ -1,6 +1,5 @@
 import { Redis } from '@upstash/redis';
-// @ts-ignore — argon2-browser has no TS types
-import argon2 from 'argon2-browser';
+import { argon2Verify } from 'hash-wasm';
 import type { IUserRepository } from '@jonji/domain';
 
 export type VerifyOTPResult =
@@ -20,8 +19,7 @@ export class VerifyOTPUseCase {
 
     let valid = false;
     try {
-      await argon2.verify({ pass: code, encoded: stored });
-      valid = true;
+      valid = await argon2Verify({ password: code, hash: stored });
     } catch {
       valid = false;
     }
