@@ -3,6 +3,30 @@ import type { Container } from '../container';
 
 const auth = new Hono<{ Bindings: any; Variables: { container: Container } }>();
 
+// Debug endpoint — remove after diagnosing
+auth.post('/debug/resend-test', async (c) => {
+  const container = c.get('container');
+  try {
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${container.emailService['apiKey']}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: container.emailService['from'],
+        to: 'hdavy2002@gmail.com',
+        subject: 'debug',
+        text: 'test',
+      }),
+    });
+    const text = await res.text();
+    return c.json({ status: res.status, body: text.slice(0, 200) });
+  } catch (e: any) {
+    return c.json({ fetchError: e.message }, 500);
+  }
+});
+
 auth.post('/otp/send', async (c) => {
   const container = c.get('container');
   const { email } = await c.req.json();
