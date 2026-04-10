@@ -35,10 +35,13 @@ export class TursoPlatformClient implements ITursoPlatformClient {
     }
 
     // Turso Platform API v1 response:
-    // { database: "name", username: "...", password: "..." }
-    // Connection URL: <database>.<org>.turso.io
-    const data = (await response.json()) as { database: string; username: string; password: string };
-    const dbUrl = `https://${data.database}.${this.orgSlug}.turso.io`;
-    return { dbUrl, authToken: data.password };
+    // { database: { Name, Hostname, DbId, ... }, username, password }
+    // Hostname is the full libSQL connection URL
+    const data = (await response.json()) as {
+      database: { Hostname: string; Name: string };
+      username: string;
+      password: string;
+    };
+    return { dbUrl: data.database.Hostname, authToken: data.password };
   }
 }
