@@ -27,6 +27,14 @@ export function createContainer(env: any): Container {
   const emailService = new ResendEmailService(env.RESEND_API_KEY, env.RESEND_FROM_EMAIL);
   const tursoPlatform = new TursoPlatformClient(env.TURSO_ORG_SLUG, env.TURSO_PLATFORM_API_TOKEN);
 
+  // UPSTASH REDIS — parked until social layer
+  // Free plan is regional — re-enable with paid Global plan
+  // when feed + presence + online tracking are added
+  // const redis = new Redis({
+  //   url: env.UPSTASH_REDIS_REST_URL,
+  //   token: env.UPSTASH_REDIS_REST_TOKEN,
+  // })
+
   // siteRepo and agentService are optional (require TURSO_URL/TURSO_TOKEN and ANTHROPIC_API_KEY)
   const siteRepo = env.TURSO_URL && env.TURSO_TOKEN
     ? new TursoSiteRepository(env.TURSO_URL, env.TURSO_TOKEN)

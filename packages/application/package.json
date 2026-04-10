@@ -17,8 +17,6 @@
     "@jonji/infrastructure": "workspace:*",
     "@jonji/types": "workspace:*",
     "@libsql/client": "^0.14.0",
-    "@upstash/ratelimit": "^2.0.0",
-    "@upstash/redis": "^1.34.0",
     "nanoid": "^5.0.0"
   },
   "devDependencies": {
