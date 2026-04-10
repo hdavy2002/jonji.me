@@ -29,6 +29,24 @@ auth.post('/debug/otp-test', async (c) => {
   }
 });
 
+// Debug — test Redis operations
+auth.post('/debug/redis-test', async (c) => {
+  try {
+    const { Redis } = await import('@upstash/redis');
+    const redis = new Redis({
+      url: c.env.UPSTASH_REDIS_REST_URL,
+      token: c.env.UPSTASH_REDIS_REST_TOKEN,
+    });
+    // Test set and get
+    await redis.set('debug:test', 'hello', { ex: 60 });
+    const val = await redis.get('debug:test');
+    await redis.del('debug:test');
+    return c.json({ ok: true, val });
+  } catch (e: any) {
+    return c.json({ error: e.message, name: e.name, stack: e.stack?.slice(0, 400) }, 500);
+  }
+});
+
 auth.post('/otp/send', async (c) => {
   const container = c.get('container');
   const { email } = await c.req.json();
