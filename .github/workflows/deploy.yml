@@ -33,6 +33,17 @@ jobs:
           workingDirectory: apps/api
           command: deploy
 
+      - name: Upload Worker secrets
+        working-directory: apps/api
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          echo "${{ secrets.TURSO_PLATFORM_API_TOKEN }}" | ../../node_modules/.bin/wrangler secret put TURSO_PLATFORM_API_TOKEN
+          echo "${{ secrets.TINYBIRD_API_KEY }}" | ../../node_modules/.bin/wrangler secret put TINYBIRD_API_KEY
+          echo "${{ secrets.RESEND_API_KEY }}" | ../../node_modules/.bin/wrangler secret put RESEND_API_KEY
+          echo "${{ secrets.ANTHROPIC_API_KEY }}" | ../../node_modules/.bin/wrangler secret put ANTHROPIC_API_KEY
+          echo "${{ secrets.LUCIA_SECRET }}" | ../../node_modules/.bin/wrangler secret put LUCIA_SECRET
+
   deploy-web:
     name: Deploy Web (Pages)
     runs-on: ubuntu-latest

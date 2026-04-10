@@ -3,3 +3,7 @@ node_modules/
 .turbo/
 dist/
 *.tsbuildinfo
+
+# Next.js build output
+.next/
+out/

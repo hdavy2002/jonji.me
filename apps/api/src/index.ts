@@ -13,6 +13,8 @@ app.use('*', async (c, next) => {
   await next();
 });
 
+app.get('/health', c => c.json({ ok: true, ts: Date.now() }));
+
 app.route('/sites', sites);
 app.route('/auth', auth);
 app.route('/inbox', inbox);
