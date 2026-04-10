@@ -1,5 +1,6 @@
 import { Redis } from '@upstash/redis';
-import { Argon2id } from 'oslo/password';
+// @ts-ignore — argon2-browser has no TS types
+import argon2 from 'argon2-browser';
 import type { IUserRepository } from '@jonji/domain';
 
 export type VerifyOTPResult =
@@ -14,10 +15,16 @@ export class VerifyOTPUseCase {
 
   async execute(email: string, code: string): Promise<VerifyOTPResult> {
     const key = email.toLowerCase().trim();
-    const hash = await this.redis.get<string>(`otp:${key}`);
-    if (!hash) throw new Error('Code expired or not found. Request a new one.');
+    const stored = await this.redis.get<string>(`otp:${key}`);
+    if (!stored) throw new Error('Code expired or not found. Request a new one.');
 
-    const valid = await new Argon2id().verify(hash, code);
+    let valid = false;
+    try {
+      await argon2.verify({ pass: code, encoded: stored });
+      valid = true;
+    } catch {
+      valid = false;
+    }
     if (!valid) throw new Error('Invalid code.');
     await this.redis.del(`otp:${key}`);
 

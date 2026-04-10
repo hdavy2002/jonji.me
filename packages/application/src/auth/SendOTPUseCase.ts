@@ -1,6 +1,7 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import { Argon2id } from 'oslo/password';
+// @ts-ignore — argon2-browser has no TS types
+import argon2 from 'argon2-browser';
 import type { IEmailService } from '@jonji/domain';
 
 export class SendOTPUseCase {
@@ -23,9 +24,19 @@ export class SendOTPUseCase {
     }
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const hash = await new Argon2id().hash(code);
-
-    await this.redis.set(`otp:${key}`, hash, { ex: 600 });
+    // Generate random salt (16 bytes = 128 bits)
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const result = await argon2.hash({
+      pass: code,
+      salt,
+      type: argon2.ArgonType.Argon2id,
+      mem: 4096,       // 4 MB memory
+      iterations: 3,
+      hashLen: 32,
+      parallelism: 4,
+    });
+    // Store the encoded hash for later verification
+    await this.redis.set(`otp:${key}`, result.encoded, { ex: 600 });
     await this.emailService.sendOTP(key, code);
   }
 }

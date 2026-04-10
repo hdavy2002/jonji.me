@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import { Redis } from '@upstash/redis';
-import { Argon2id } from 'oslo/password';
+// @ts-ignore — argon2-browser has no TS types
+import argon2 from 'argon2-browser';
 import { createClient } from '@libsql/client';
 import type { IUserRepository } from '@jonji/domain';
 import type { ITursoPlatformClient } from '@jonji/infrastructure';
@@ -71,9 +72,15 @@ export class RegisterUserUseCase {
     const usernameKey = username.toLowerCase().trim();
 
     // Verify OTP
-    const hash = await this.redis.get<string>(`otp:${emailKey}`);
-    if (!hash) throw new Error('Code expired. Request a new one.');
-    const valid = await new Argon2id().verify(hash, code);
+    const stored = await this.redis.get<string>(`otp:${emailKey}`);
+    if (!stored) throw new Error('Code expired. Request a new one.');
+    let valid = false;
+    try {
+      await argon2.verify({ pass: code, encoded: stored });
+      valid = true;
+    } catch {
+      valid = false;
+    }
     if (!valid) throw new Error('Invalid code.');
     await this.redis.del(`otp:${emailKey}`);
 
