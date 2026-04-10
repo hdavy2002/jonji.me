@@ -1,5 +1,5 @@
-import bcrypt from 'bcryptjs';
 import { Redis } from '@upstash/redis';
+import { Argon2id } from 'oslo/password';
 import type { IUserRepository } from '@jonji/domain';
 
 export type VerifyOTPResult =
@@ -17,7 +17,7 @@ export class VerifyOTPUseCase {
     const hash = await this.redis.get<string>(`otp:${key}`);
     if (!hash) throw new Error('Code expired or not found. Request a new one.');
 
-    const valid = await bcrypt.compare(code, hash);
+    const valid = await new Argon2id().verify(hash, code);
     if (!valid) throw new Error('Invalid code.');
     await this.redis.del(`otp:${key}`);
 

@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
-import bcrypt from 'bcryptjs';
 import { Redis } from '@upstash/redis';
+import { Argon2id } from 'oslo/password';
 import { createClient } from '@libsql/client';
 import type { IUserRepository } from '@jonji/domain';
 import type { ITursoPlatformClient } from '@jonji/infrastructure';
@@ -73,7 +73,7 @@ export class RegisterUserUseCase {
     // Verify OTP
     const hash = await this.redis.get<string>(`otp:${emailKey}`);
     if (!hash) throw new Error('Code expired. Request a new one.');
-    const valid = await bcrypt.compare(code, hash);
+    const valid = await new Argon2id().verify(hash, code);
     if (!valid) throw new Error('Invalid code.');
     await this.redis.del(`otp:${emailKey}`);
 

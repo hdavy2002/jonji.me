@@ -1,6 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
-import bcrypt from 'bcryptjs';
+import { Argon2id } from 'oslo/password';
 import type { IEmailService } from '@jonji/domain';
 
 export class SendOTPUseCase {
@@ -18,10 +18,13 @@ export class SendOTPUseCase {
       prefix: 'ratelimit:otp',
     });
     const { success } = await ratelimit.limit(key);
-    if (!success) throw new Error('Too many requests. Wait 10 minutes.');
+    if (!success) {
+      throw new Error('Too many requests. Please wait 10 minutes.');
+    }
 
     const code = String(Math.floor(100000 + Math.random() * 900000));
-    const hash = await bcrypt.hash(code, 10);
+    const hash = await new Argon2id().hash(code);
+
     await this.redis.set(`otp:${key}`, hash, { ex: 600 });
     await this.emailService.sendOTP(key, code);
   }
