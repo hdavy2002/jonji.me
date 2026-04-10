@@ -91,9 +91,10 @@ export class RegisterUserUseCase {
     const existing = await this.userRepo.findByUsername(usernameKey);
     if (existing) throw new Error('Username already taken.');
 
-    // Provision Turso DB
+    // Provision Turso DB — name must be Turso-compatible (lowercase, dashes only)
     const userId = 'usr_' + nanoid(16);
-    const { dbUrl, authToken } = await this.tursoPlatform.createUserDatabase(userId);
+    const tursoDbName = userId.replace(/_/g, '-');
+    const { dbUrl, authToken } = await this.tursoPlatform.createUserDatabase(tursoDbName);
 
     // Run schema on new DB
     const userDb = createClient({ url: dbUrl, authToken });
