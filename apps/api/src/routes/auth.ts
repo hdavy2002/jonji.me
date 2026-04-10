@@ -15,6 +15,20 @@ auth.post('/debug/resend-test', async (c) => {
   }
 });
 
+// Debug — test OtpService HMAC-SHA256
+auth.post('/debug/otp-test', async (c) => {
+  try {
+    const { OtpService } = await import('@jonji/infrastructure');
+    const svc = new OtpService(c.env.LUCIA_SECRET || 'test-secret');
+    const code = svc.generateCode();
+    const hash = await svc.hashCode(code);
+    const verified = await svc.verifyCode(code, hash);
+    return c.json({ ok: true, code, hash, verified });
+  } catch (e: any) {
+    return c.json({ error: e.message, name: e.name, stack: e.stack?.slice(0, 400) }, 500);
+  }
+});
+
 auth.post('/otp/send', async (c) => {
   const container = c.get('container');
   const { email } = await c.req.json();
