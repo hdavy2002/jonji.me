@@ -13,8 +13,8 @@ export class TursoPlatformClient {
 
   async createUserDatabase(userId: string): Promise<TursoDBCredentials> {
     // Database names must be lowercase alphanumeric + hyphens, max 32 chars
-    // userId format: usr_xxxxxxxxxxxxxxxx — strip prefix, keep 16 chars
-    const dbName = `u-${userId.replace('usr_', '').slice(0, 20)}`
+    // userId format: usr_xxxxxxxxxxxxxxxx — strip prefix, keep 16 chars, lowercase
+    const dbName = `u-${userId.replace('usr_', '').slice(0, 20).toLowerCase()}`
 
     // Step 1: Create the database
     const createResponse = await fetch(
