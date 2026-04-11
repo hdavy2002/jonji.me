@@ -10,15 +10,29 @@ function SearchResults() {
   const [results, setResults] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!q) return
     setLoading(true)
     setSearched(true)
+    setError(null)
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/search?q=${encodeURIComponent(q)}`)
-      .then(r => r.json())
-      .then(d => setResults(d.results || []))
-      .catch(() => setResults([]))
+      .then(async r => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({}))
+          throw new Error(body.error || `Error ${r.status}`)
+        }
+        return r.json()
+      })
+      .then(d => {
+        setResults(d.results || [])
+      })
+      .catch((err) => {
+        console.error('Search error:', err)
+        setError(err.message)
+        setResults([])
+      })
       .finally(() => setLoading(false))
   }, [q])
 
@@ -34,8 +48,13 @@ function SearchResults() {
         </p>
       )}
       <div className="space-y-4">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-lg text-sm text-center">
+            {error}. Make sure your API is configured correctly.
+          </div>
+        )}
         {results.map(r => <ResultCard key={r.siteId} result={r} />)}
-        {!loading && searched && results.length === 0 && (
+        {!loading && searched && !error && results.length === 0 && (
           <p className="text-center text-gray-400 py-12">
             No results found. Try different keywords.
           </p>

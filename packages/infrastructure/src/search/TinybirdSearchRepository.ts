@@ -21,6 +21,11 @@ export class TinybirdSearchRepository implements ISearchRepository {
       conditions.push(`position('${loc}' IN location_text) > 0`);
     }
 
+    if (rawQuery) {
+      const q = rawQuery.replace(/'/g, "''");
+      conditions.push(`(title ILIKE '%${q}%' OR description ILIKE '%${q}%')`);
+    }
+
     const sql = `
       SELECT site_id, user_id, username, slug, title,
              description, site_type, intent_type, agent_mode,
